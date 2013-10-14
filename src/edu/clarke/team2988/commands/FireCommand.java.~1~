@@ -1,0 +1,108 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package edu.clarke.team2988.commands;
+
+import edu.clarke.team2988.subsystems.CompressorSubsystem;
+
+/**
+ *
+ * This class is responsible for handling joystick trigger event to shoot the
+ * Frisbee by activating the ram which is controlled by the ShooterSubsystem.
+ * <p>
+ * This command is instantiated within the OI (Operator Interface) class at
+ * startup and never terminates.
+ *
+ * @author Micheal Dowling
+ * @see Subsystem
+ * @see CommandBase
+ * @see OI
+ *
+ */
+/**
+ *
+ * @author dowling
+ */
+public class FireCommand extends CommandBase {
+
+    boolean m_finished = false;
+    boolean m_fireActive = false;
+    private static edu.wpi.first.wpilibj.Timer m_ExtendTimer = new edu.wpi.first.wpilibj.Timer();
+    private static int m_TimerRetractDelayValue = 1;
+    private CompressorSubsystem m_compressorSubsystem = null;
+
+    /**
+     * Constructor for FireCommand.
+     * Specifies a requirement for the Compressor subsystem. compressorSubsystem
+     * is created in {@link CommandBase CommandBase}.
+     */
+    public FireCommand() {
+        m_compressorSubsystem = CommandBase.getCompressorSubsystem();
+
+        /* ------------------------------------------------------------------ */
+        /*  requires() IS NECESSARY TO PREVENT POTENTIAL CONFLICTS CAUSED     */
+        /*  BY MORE THAN ONE COMMAND ATTEMPTING TO USE THE SAME SUBSYSTEM AT  */
+        /*  THE SAME TIME.                                                    */
+        /* ------------------------------------------------------------------ */
+        requires(m_compressorSubsystem);
+
+    }  /* FireCommand(); */
+
+    // Called just before this Command runs the first time
+    protected void initialize() {
+        CommandBase.getCompressorSubsystem().retractFire();
+        m_fireActive = false;
+        m_finished = false;
+        m_ExtendTimer.reset();
+        m_ExtendTimer.start();
+    }
+
+    // Called repeatedly when this Command is scheduled to run
+    protected void execute() {
+
+        if (m_compressorSubsystem.inUse() == false) {
+
+            m_compressorSubsystem.extendFire();
+            m_fireActive = true;
+
+        } else {
+
+            m_finished = true;
+
+        }  /* else m_compressorSubsystem.inUse WAS TRUE */
+
+        if (m_fireActive == true &&
+            (m_ExtendTimer.get() > m_TimerRetractDelayValue)) {
+
+            m_finished = true;
+
+        }  /* if (m_fireActive == true &&
+                  (m_ExtendTimer.get() > m_TimerRetractDelayValue)) */
+
+    }  /* execute(); */
+
+    // Make this return true when this Command no longer needs to run execute()
+    protected boolean isFinished() {
+        return m_finished;
+    }
+
+    // Called once after isFinished returns true
+    protected void end() {
+        m_compressorSubsystem.retractFire();
+    }
+
+    // Called when another command which requires one or more of the same
+    // subsystems is scheduled to run
+    protected void interrupted() {
+        m_finished = true;
+    }
+
+    public void stop() {
+        m_finished = true;
+    }
+
+    protected void canel() {
+        m_finished = true;
+    }
+}
